@@ -11,16 +11,24 @@ In your routing module...
 
 ```elm
 import UrlParser exposing (..)
-import Auth0.UrlParser exposing (Auth0CallbackInfo, accessTokenUrlParser)
+import Auth0.UrlParser
+    exposing
+        ( Auth0CallbackInfo
+        , Auth0CallbackError
+        , accessTokenUrlParser
+        , unauthorizedUrlParser
+        )
 
 type Route
     = AccessTokenRoute Auth0CallbackInfo
+    | UnauthorizedRoute Auth0CallbackError
     | SomeOtherRoute
 
 route : Parser (Route -> a) a
 route =
     oneOf
         [ map AccessTokenRoute accessTokenUrlParser
+        , map UnauthorizedRoute unauthorizedUrlParser
         , map SomeOtherRoute (s "others")
         ]
 ```

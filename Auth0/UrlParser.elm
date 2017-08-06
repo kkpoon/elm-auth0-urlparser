@@ -1,11 +1,19 @@
-module Auth0.UrlParser exposing (Auth0CallbackInfo, accessTokenUrlParser)
+module Auth0.UrlParser
+    exposing
+        ( Auth0CallbackInfo
+        , Auth0CallbackError
+        , accessTokenUrlParser
+        , unauthorizedUrlParser
+        )
 
 {-| UrlParser for Auth0 token callback
 
 Recommend o use this library with
 `[kkpoon/elm-auth0](https://github.com/kkpoon/elm-auth0)`.
 
-@docs Auth0CallbackInfo, accessTokenUrlParser
+@docs Auth0CallbackInfo, Auth0CallbackError
+
+@docs accessTokenUrlParser, unauthorizedUrlParser
 
 -}
 
@@ -23,6 +31,14 @@ type alias Auth0CallbackInfo =
     , expiresIn : Int
     , tokenType : String
     , state : String
+    }
+
+
+{-| Callback of Error
+-}
+type alias Auth0CallbackError =
+    { error : String
+    , description : String
     }
 
 
@@ -80,3 +96,45 @@ accessTokenUrlParser =
                     |> Ok
             else
                 Err "not access token route"
+
+
+{-| Create an error callback UrlParser
+
+    import UrlParser exposing (..)
+    import Auth0.UrlParser exposing (Auth0CallbackError, unauthorizedUrlParser)
+
+    type Route
+        = UnauthorizedRoute Auth0CallbackError
+        | SomeOtherRoute
+
+    route : Parser (Route -> a) a
+    route =
+        oneOf
+            [ map UnauthorizedRoute unauthorizedUrlParser
+            , map SomeOtherRoute (s "others")
+            ]
+
+-}
+unauthorizedUrlParser : UrlParser.Parser (Auth0CallbackError -> a) a
+unauthorizedUrlParser =
+    UrlParser.custom "AUTH0_UNAUTHORIZED" <|
+        \segment ->
+            if String.startsWith "error" segment then
+                String.split "&" segment
+                    |> List.map (String.split "=")
+                    |> List.foldr
+                        (\item error ->
+                            case item of
+                                [ "error", value ] ->
+                                    { error | error = value }
+
+                                [ "error_description", value ] ->
+                                    { error | description = value }
+
+                                _ ->
+                                    error
+                        )
+                        (Auth0CallbackError "" "")
+                    |> Ok
+            else
+                Err "not unauthorized route"
