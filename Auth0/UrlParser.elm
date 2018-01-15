@@ -28,9 +28,9 @@ If no `openid` in `scope` parameters in authorize request, no idToken return
 type alias Auth0CallbackInfo =
     { accessToken : String
     , idToken : Maybe String
-    , expiresIn : Int
-    , tokenType : String
-    , state : String
+    , expiresIn : Maybe Int
+    , tokenType : Maybe String
+    , state : Maybe String
     }
 
 
@@ -80,19 +80,19 @@ accessTokenUrlParser =
                                         | expiresIn =
                                             sec
                                                 |> String.toInt
-                                                |> Result.withDefault 0
+                                                |> Result.toMaybe
                                     }
 
                                 [ "token_type", tokenType ] ->
-                                    { info | tokenType = tokenType }
+                                    { info | tokenType = Just tokenType }
 
                                 [ "state", state ] ->
-                                    { info | state = state }
+                                    { info | state = Just state }
 
                                 _ ->
                                     info
                         )
-                        (Auth0CallbackInfo "" Nothing 0 "" "")
+                        (Auth0CallbackInfo "" Nothing Nothing Nothing Nothing)
                     |> Ok
             else
                 Err "not access token route"
