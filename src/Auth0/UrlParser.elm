@@ -17,7 +17,7 @@ Recommend o use this library with
 
 -}
 
-import UrlParser
+import Url.Parser
 
 
 {-| Callback parameters from Auth0
@@ -59,9 +59,9 @@ type alias Auth0CallbackError =
             ]
 
 -}
-accessTokenUrlParser : UrlParser.Parser (Auth0CallbackInfo -> a) a
+accessTokenUrlParser : Url.Parser.Parser (Auth0CallbackInfo -> a) a
 accessTokenUrlParser =
-    UrlParser.custom "AUTH0_ACCESS_TOKEN" <|
+    Url.Parser.custom "AUTH0_ACCESS_TOKEN" <|
         \segment ->
             if String.startsWith "access_token" segment then
                 String.split "&" segment
@@ -76,12 +76,7 @@ accessTokenUrlParser =
                                     { info | idToken = Just token }
 
                                 [ "expires_in", sec ] ->
-                                    { info
-                                        | expiresIn =
-                                            sec
-                                                |> String.toInt
-                                                |> Result.toMaybe
-                                    }
+                                    { info | expiresIn = String.toInt sec }
 
                                 [ "token_type", tokenType ] ->
                                     { info | tokenType = Just tokenType }
@@ -93,9 +88,9 @@ accessTokenUrlParser =
                                     info
                         )
                         (Auth0CallbackInfo "" Nothing Nothing Nothing Nothing)
-                    |> Ok
+                    |> Just
             else
-                Err "not access token route"
+                Nothing
 
 
 {-| Create an error callback UrlParser
@@ -115,9 +110,9 @@ accessTokenUrlParser =
             ]
 
 -}
-unauthorizedUrlParser : UrlParser.Parser (Auth0CallbackError -> a) a
+unauthorizedUrlParser : Url.Parser.Parser (Auth0CallbackError -> a) a
 unauthorizedUrlParser =
-    UrlParser.custom "AUTH0_UNAUTHORIZED" <|
+    Url.Parser.custom "AUTH0_UNAUTHORIZED" <|
         \segment ->
             if String.startsWith "error" segment then
                 String.split "&" segment
@@ -135,6 +130,6 @@ unauthorizedUrlParser =
                                     error
                         )
                         (Auth0CallbackError "" "")
-                    |> Ok
+                    |> Just
             else
-                Err "not unauthorized route"
+                Nothing
